@@ -44,8 +44,6 @@ class ElectraMaskedAutoencoderViT(nn.Module):
 
         self.norm_pix_loss = norm_pix_loss
 
-        self.criterion = nn.CrossEntropyLoss()
-
         self.initialize_weights()
 
     def initialize_weights(self):
@@ -74,7 +72,7 @@ class ElectraMaskedAutoencoderViT(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def encode(self, x):
+    def forward(self, x):
         # embed patches
         x = self.patch_embed(x)
 
@@ -95,28 +93,6 @@ class ElectraMaskedAutoencoderViT(nn.Module):
         x = self.norm(x)
 
         return x
-
-
-    def loss(self, logits, mask):
-        """
-        imgs: [N, 3, H, W]
-        pred: [N, L, p*p*3]
-        mask: [N, L], 0 is keep, 1 is remove, 
-        """
-
-        mask = mask[:, 0, ::self.patch_size, ::self.patch_size]
-        mask_flatten = mask.reshape(mask.shape[0], -1).type(torch.long)
-
-        loss = criterion(logits.permute(0, 2, 1)[:, :, 1:], mask_flatten)
-
-        return loss
-
-    def forward(self, imgs, mask):
-        logits = self.encode(imgs)
-        #pred = self.forward_decoder(latent, ids_restore)  # [N, L, p*p*3]
-        loss = self.loss(logits, mask)
-        return logits, loss
-
 
 
 class MaskedAutoencoderViT(nn.Module):
@@ -334,6 +310,13 @@ def electra_large_patch16(**kwargs):
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
     return model
 
+def electra_base_patch16(**kwargs):
+    model = ElectraMaskedAutoencoderViT(
+        patch_size=16, embed_dim=768, depth=12, num_heads=12,
+        decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
+        mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    return model
+
 
 def mae_vit_base_patch16_dec512d8b(**kwargs):
     model = MaskedAutoencoderViT(
@@ -364,4 +347,5 @@ mae_vit_tiny = mae_vit_tiny_patch4
 mae_vit_base_patch16 = mae_vit_base_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
 mae_vit_large_patch16 = mae_vit_large_patch16_dec512d8b  # decoder: 512 dim, 8 blocks
 mae_vit_huge_patch14 = mae_vit_huge_patch14_dec512d8b  # decoder: 512 dim, 8 blocks
-electra = electra_large_patch16
+electra_large = electra_large_patch16
+electra = electra_base_patch16

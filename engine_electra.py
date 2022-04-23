@@ -35,6 +35,8 @@ def train_one_epoch(model: torch.nn.Module,
 
     optimizer.zero_grad()
 
+    criterion = torch.nn.CrossEntropyLoss()
+
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
 
@@ -47,8 +49,21 @@ def train_one_epoch(model: torch.nn.Module,
         samples = samples.to(device, non_blocking=True)
 
         with torch.cuda.amp.autocast():
-            _, generated_samples, mask = pretrained_model(samples, mask_ratio=args.mask_ratio)
-            _, loss = model(samples, mask)
+            with torch.no_grad():
+                _, generated_samples, mask = pretrained_model(samples, mask_ratio=args.mask_ratio)
+                #print(f"Before patchify generated smaples: {generated_samples.size()}")
+                generated_samples = pretrained_model.unpatchify(generated_samples)
+                #print(f"After patchify generated samples: {generated_samples.size()}")
+            logits = model(generated_samples)
+
+            #print(f"Model logits: {logits.size()}")
+            #print(f"Mask size: {mask.size()}")
+
+            #mask = mask[:, 0, ::model.patch_size, ::model.patch_size]
+            #mask_flatten = mask.reshape(mask.shape[0], -1).type(torch.long)
+
+            loss = criterion(logits.permute(0, 2, 1)[:, :, 1:], mask.type(torch.long))
+
 
         loss_value = loss.item()
 
