@@ -62,7 +62,7 @@ def loadData(data_dir, train_batch_size, val_batch_size):
     
     train_transform = transforms.Compose([
         transforms.Resize(256),
-        transforms.RandomCrop(224)
+        transforms.RandomCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -78,8 +78,8 @@ def loadData(data_dir, train_batch_size, val_batch_size):
     val_dataset = ValidationDataSet(val_dir, transform=val_transform, class_to_dict=class_to_dict)
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=train_batch_size, shuffle=True, num_workers=2)
-    #val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=2)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=val_batch_size, shuffle=False, num_workers=2)
 
-    return train_loader, val_dataset
+    return train_dataset, train_loader, val_dataset, val_loader
 
 
