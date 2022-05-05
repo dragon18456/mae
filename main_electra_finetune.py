@@ -306,7 +306,7 @@ def main(args):
             log_writer=log_writer,
             args=args
         )
-        if args.output_dir:
+        if args.output_dir and epoch > 0 and epoch % 20 == 0:
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                 loss_scaler=loss_scaler, epoch=epoch)
