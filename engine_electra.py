@@ -14,6 +14,8 @@ from typing import Iterable
 
 import torch
 
+from torchvision.transforms import GaussianBlur
+
 import util.misc as misc
 import util.lr_sched as lr_sched
 
@@ -37,6 +39,8 @@ def train_one_epoch(model: torch.nn.Module,
 
     criterion = torch.nn.CrossEntropyLoss()
 
+    blur = GaussianBlur(kernel_size=25)
+
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
 
@@ -53,7 +57,10 @@ def train_one_epoch(model: torch.nn.Module,
                 _, generated_samples, mask = pretrained_model(samples, mask_ratio=args.mask_ratio)
                 #print(f"Before patchify generated smaples: {generated_samples.size()}")
                 generated_samples = pretrained_model.unpatchify(generated_samples)
+                generated_samples = blur(generated_samples)
                 #print(f"After patchify generated samples: {generated_samples.size()}")
+
+            
             logits = model(generated_samples)
 
             #print(f"Model logits: {logits.size()}")
